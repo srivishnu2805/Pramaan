@@ -1,0 +1,21 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: pramaan_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pramaan_admin
+      POSTGRES_PASSWORD: secure
+      POSTGRES_DB: pramaan_db
+    ports:
+      - "${PRAMAAN_DB_PORT:-5432}:5432"
+    volumes:
+      - pramaan_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pramaan_admin -d pramaan_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pramaan_pgdata:

@@ -1,0 +1,16 @@
+[tools]
+deno = "2.9.6"
+
+[tasks]
+dev = "uv run uvicorn src.pramaan.main:app --reload --port 8000"
+worker = "uv run python worker.py"
+test = "uv run pytest"
+lint = "uv run ruff check ."
+format = "uv run ruff format ."
+check = "uv run ruff check . && uv run pytest"
+db-upgrade = "uv run alembic upgrade head"
+db-revision = "uv run alembic revision --autogenerate -m"
+db-up = "docker compose up -d"
+db-down = "docker compose down"
+db-logs = "docker compose logs -f db"
+db-reset = "docker compose down -v && docker compose up -d && uv run alembic upgrade head"

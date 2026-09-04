@@ -10,30 +10,46 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from pramaan.audit import record_event
 from pramaan.models import Case, CasePermission, User
-from pramaan.permissions import can_access_case, clearance_rank, visible_case_ids
+from pramaan.permissions import clearance_rank, visible_case_ids
 
 
 async def create_case(
-    session: AsyncSession, user: User, title: str, classification: str, description: str | None = None
+    session: AsyncSession,
+    user: User,
+    title: str,
+    classification: str,
+    description: str | None = None,
 ) -> Case:
     try:
         if clearance_rank(classification) > clearance_rank(user.clearance):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Classification exceeds clearance")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Classification exceeds clearance"
+            )
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown classification")
-    case = Case(title=title, classification=classification, description=description, owner_id=user.id)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown classification"
+        ) from None
+    case = Case(
+        title=title, classification=classification, description=description, owner_id=user.id
+    )
     session.add(case)
     await session.flush()
     await record_event(session, "case.create", actor_id=user.id, object_ref=str(case.id))
     return case
 
 
-async def list_cases(session: AsyncSession, user: User, limit: int = 50, offset: int = 0) -> list[Case]:
+async def list_cases(
+    session: AsyncSession, user: User, limit: int = 50, offset: int = 0
+) -> list[Case]:
     ids = await visible_case_ids(session, user)
     if not ids:
         return []
     result = await session.execute(
-        select(Case).where(Case.id.in_(ids)).order_by(Case.created_at.desc()).limit(limit).offset(offset)
+        select(Case)
+        .where(Case.id.in_(ids))
+        .order_by(Case.created_at.desc())
+        .limit(limit)
+        .offset(offset)
     )
     return list(result.scalars().all())
 
@@ -57,7 +73,9 @@ async def _require_manage(session: AsyncSession, user: User, case_id: UUID) -> C
     )
     perm = result.scalars().first()
     if perm is None or perm.level != "MANAGE":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Manage permission required")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Manage permission required"
+        )
     return case
 
 
@@ -84,7 +102,10 @@ async def grant_permission(
         session.add(row)
     await session.flush()
     await record_event(
-        session, "permission.grant", actor_id=granter.id, object_ref=str(case.id),
+        session,
+        "permission.grant",
+        actor_id=granter.id,
+        object_ref=str(case.id),
         payload={"target": str(target.id), "level": level},
     )
     return row
@@ -105,12 +126,17 @@ async def revoke_permission(
     await session.delete(row)
     await session.flush()
     await record_event(
-        session, "permission.revoke", actor_id=revoker.id, object_ref=str(case.id),
+        session,
+        "permission.revoke",
+        actor_id=revoker.id,
+        object_ref=str(case.id),
         payload={"target": str(target_user_id)},
     )
 
 
-async def list_permissions(session: AsyncSession, user: User, case_id: UUID) -> list[CasePermission]:
+async def list_permissions(
+    session: AsyncSession, user: User, case_id: UUID
+) -> list[CasePermission]:
     from pramaan.permissions import require_case_access
 
     case = await require_case_access(session, user, case_id)

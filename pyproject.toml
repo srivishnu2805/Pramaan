@@ -40,6 +40,7 @@ exclude = ["web", ".venv", "migrations"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]  # Depends() in defaults is idiomatic FastAPI
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

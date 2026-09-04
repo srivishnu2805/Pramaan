@@ -23,8 +23,13 @@ async def rag_query(
     return RagResponse(
         answer=result.answer,
         citations=[
-            CitationOut(document_id=c.document_id, version_number=c.version_number,
-                        page=c.page, chunk_index=c.chunk_index, snippet=c.snippet)
+            CitationOut(
+                document_id=c.document_id,
+                version_number=c.version_number,
+                page=c.page,
+                chunk_index=c.chunk_index,
+                snippet=c.snippet,
+            )
             for c in result.citations
         ],
     )

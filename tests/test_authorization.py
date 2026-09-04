@@ -15,7 +15,9 @@ from pramaan.permissions import (
 
 
 async def _user(session, username, role="investigator", clearance="SECRET", **kw):
-    u = User(username=username, hashed_password=hash_password("pw"), role=role, clearance=clearance, **kw)
+    u = User(
+        username=username, hashed_password=hash_password("pw"), role=role, clearance=clearance, **kw
+    )
     session.add(u)
     await session.flush()
     return u

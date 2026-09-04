@@ -16,10 +16,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pramaan.models import AuditEvent
@@ -27,12 +27,14 @@ from pramaan.models import AuditEvent
 GENESIS_HASH = "00" * 32
 
 
-def _canonical(event_type: str, actor_id: UUID | None, object_ref: str | None, occurred_at: datetime) -> bytes:
+def _canonical(
+    event_type: str, actor_id: UUID | None, object_ref: str | None, occurred_at: datetime
+) -> bytes:
     payload = {
         "type": event_type,
         "actor": str(actor_id) if actor_id else None,
         "object": object_ref,
-        "at": occurred_at.astimezone(timezone.utc).isoformat(),
+        "at": occurred_at.astimezone(UTC).isoformat(),
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
@@ -62,7 +64,7 @@ async def record_event(
     row = latest.scalars().first()
     prev_hash = row.event_hash if row else GENESIS_HASH
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     event = AuditEvent(
         event_type=event_type,
         actor_id=actor_id,

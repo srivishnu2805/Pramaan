@@ -27,7 +27,7 @@ def clearance_rank(clearance: str) -> int:
     try:
         return _RANK[clearance]
     except KeyError:
-        raise ValueError(f"unknown clearance/classification: {clearance!r}")
+        raise ValueError(f"unknown clearance/classification: {clearance!r}") from None
 
 
 def _clearance_ok(user_clearance: str, classification: str) -> bool:
@@ -83,9 +83,7 @@ async def visible_case_ids(session: AsyncSession, user: User) -> list[UUID]:
         ids = list(result.scalars().all())
     else:
         owned = select(Case.id).where(Case.owner_id == user.id)
-        granted = (
-            select(CasePermission.case_id).where(CasePermission.user_id == user.id)
-        )
+        granted = select(CasePermission.case_id).where(CasePermission.user_id == user.id)
         result = await session.execute(select(Case.id).where(Case.id.in_(owned.union(granted))))
         ids = list(result.scalars().all())
     # Apply clearance filtering server-side. Admin bypasses permission rows but

@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID, uuid4
 
 from pgvector.sqlalchemy import VECTOR
 from sqlalchemy import (
+    JSON,
     Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
     Integer,
-    JSON,
     LargeBinary,
     String,
     Text,
@@ -29,7 +29,7 @@ def _uuid() -> UUID:
     return uuid4()
 
 
-class DocumentStatus(str, Enum):
+class DocumentStatus(StrEnum):
     ACTIVE = "ACTIVE"
     ARCHIVED = "ARCHIVED"
     QUARANTINED = "QUARANTINED"
@@ -47,7 +47,9 @@ class User(Base):
     department: Mapped[str | None] = mapped_column(String(128), nullable=True)
     clearance: Mapped[str] = mapped_column(String(32), nullable=False, default="UNCLASSIFIED")
     disabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class Case(Base):
@@ -59,7 +61,9 @@ class Case(Base):
     classification: Mapped[str] = mapped_column(String(32), nullable=False, default="UNCLASSIFIED")
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     owner: Mapped[User] = relationship()
     permissions: Mapped[list[CasePermission]] = relationship(
@@ -72,8 +76,12 @@ class CasePermission(Base):
     __table_args__ = (UniqueConstraint("case_id", "user_id", name="uq_case_permission"),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=_uuid)
-    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    case_id: Mapped[UUID] = mapped_column(
+        ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     level: Mapped[str] = mapped_column(String(16), nullable=False, default="VIEW")
 
     case: Mapped[Case] = relationship(back_populates="permissions")
@@ -94,7 +102,9 @@ class Document(Base):
     classification: Mapped[str] = mapped_column(String(32), nullable=False, default="UNCLASSIFIED")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="ACTIVE")
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     case: Mapped[Case] = relationship()
     versions: Mapped[list[DocumentVersion]] = relationship(
@@ -110,7 +120,9 @@ class DocumentVersion(Base):
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=_uuid)
-    document_id: Mapped[UUID] = mapped_column(ForeignKey("documents.id"), nullable=False, index=True)
+    document_id: Mapped[UUID] = mapped_column(
+        ForeignKey("documents.id"), nullable=False, index=True
+    )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     ciphertext_nonce: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
@@ -122,7 +134,9 @@ class DocumentVersion(Base):
         ForeignKey("document_versions.id"), nullable=True
     )
     created_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     classification: Mapped[str] = mapped_column(String(32), nullable=False)
     signature: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     manifest: Mapped[str] = mapped_column(Text, nullable=False)
@@ -132,20 +146,26 @@ class DocumentVersion(Base):
 
 class Chunk(Base):
     __tablename__ = "chunks"
-    __table_args__ = (
-        UniqueConstraint("version_id", "chunk_index", name="uq_chunk_version_index"),
-    )
+    __table_args__ = (UniqueConstraint("version_id", "chunk_index", name="uq_chunk_version_index"),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=_uuid)
-    version_id: Mapped[UUID] = mapped_column(ForeignKey("document_versions.id", ondelete="CASCADE"), nullable=False, index=True)
-    document_id: Mapped[UUID] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
-    case_id: Mapped[UUID] = mapped_column(ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True)
+    version_id: Mapped[UUID] = mapped_column(
+        ForeignKey("document_versions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    document_id: Mapped[UUID] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    case_id: Mapped[UUID] = mapped_column(
+        ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     document_classification: Mapped[str] = mapped_column(String(32), nullable=False)
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     page: Mapped[int | None] = mapped_column(Integer, nullable=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[list[float] | None] = mapped_column(VECTOR(384), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     version: Mapped[DocumentVersion] = relationship()
     document: Mapped[Document] = relationship()
@@ -160,7 +180,9 @@ class AuditEvent(Base):
     actor_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     object_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
     payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    occurred_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     prev_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     event_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True, unique=True)
 
@@ -177,11 +199,15 @@ class IngestionJob(Base):
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=_uuid)
-    document_id: Mapped[UUID] = mapped_column(ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    document_id: Mapped[UUID] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )

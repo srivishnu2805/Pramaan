@@ -22,7 +22,7 @@ def get_kms() -> KMSBackend:
     try:
         root_key = bytes.fromhex(raw)
     except ValueError:
-        raise RuntimeError("PRAMAAN_KMS_ROOT_KEY_HEX must be hex")
+        raise RuntimeError("PRAMAAN_KMS_ROOT_KEY_HEX must be hex") from None
     if len(root_key) != 32:
         raise RuntimeError("PRAMAAN_KMS_ROOT_KEY_HEX must decode to 32 bytes (AES-256)")
     return DevKMSBackend(root_key)

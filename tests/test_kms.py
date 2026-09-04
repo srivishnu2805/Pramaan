@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import os
 
 import pytest
@@ -62,7 +61,9 @@ def test_envelope_fresh_nonce_per_encryption(root_key: bytes, kms: DevKMSBackend
 
 def test_envelope_tampered_ciphertext_detected(root_key: bytes, kms: DevKMSBackend):
     payload = envelope_encrypt(kms, b"integrity matters")
-    tampered = payload.__replace__(ciphertext=payload.ciphertext[:-1] + bytes([payload.ciphertext[-1] ^ 0xFF]))
+    tampered = payload.__replace__(
+        ciphertext=payload.ciphertext[:-1] + bytes([payload.ciphertext[-1] ^ 0xFF])
+    )
     with pytest.raises(InvalidTag):
         envelope_decrypt(kms, tampered)
 

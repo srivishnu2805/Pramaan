@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pramaan.api.schemas import PermissionGrant, PermissionOut
@@ -21,7 +21,9 @@ async def list_permissions(
     session: AsyncSession = Depends(get_session),
 ):
     rows = await service.list_permissions(session, user, case_id)
-    return [PermissionOut(id=r.id, case_id=r.case_id, user_id=r.user_id, level=r.level) for r in rows]
+    return [
+        PermissionOut(id=r.id, case_id=r.case_id, user_id=r.user_id, level=r.level) for r in rows
+    ]
 
 
 @router.post("", response_model=PermissionOut, status_code=201)

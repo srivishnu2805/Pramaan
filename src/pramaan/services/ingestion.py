@@ -14,18 +14,16 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pramaan.audit import record_event
 from pramaan.config import settings
-from pramaan.models import Chunk, Document, DocumentStatus, DocumentVersion, IngestionJob, User
-from pramaan.permissions import require_case_access
+from pramaan.models import Chunk, Document, DocumentStatus, DocumentVersion, IngestionJob
 from pramaan.services.ai import get_embedding_provider, get_extractor
-from pramaan.services.documents import decrypt_version
 
 MAX_ATTEMPTS = 3
 
@@ -85,6 +83,7 @@ def detect_mime(content: bytes, filename: str) -> str:
 
 # --- validation / scanning ----------------------------------------------------
 
+
 def validate_upload(content: bytes, filename: str) -> str:
     """Size + type validation. Returns the trusted content type."""
     if not content:
@@ -123,6 +122,7 @@ def malware_scan(content: bytes, mime: str) -> tuple[bool, str]:
 
 # --- chunking -----------------------------------------------------------------
 
+
 def chunk_text(text: str, size: int | None = None, overlap: int | None = None) -> list[str]:
     size = size or settings.chunk_size
     overlap = overlap if overlap is not None else settings.chunk_overlap
@@ -141,6 +141,7 @@ def chunk_text(text: str, size: int | None = None, overlap: int | None = None) -
 
 
 # --- jobs ---------------------------------------------------------------------
+
 
 async def enqueue_ingestion(session: AsyncSession, document_id: UUID) -> IngestionJob:
     job = IngestionJob(document_id=document_id, status="PENDING")
@@ -168,7 +169,10 @@ async def _claim_job(session: AsyncSession) -> IngestionJob | None:
         select(IngestionJob)
         .where(
             (IngestionJob.status == "PENDING")
-            | ((IngestionJob.status.in_(("FAILED", "PROCESSING"))) & (IngestionJob.attempts < MAX_ATTEMPTS))
+            | (
+                (IngestionJob.status.in_(("FAILED", "PROCESSING")))
+                & (IngestionJob.attempts < MAX_ATTEMPTS)
+            )
         )
         .order_by(IngestionJob.created_at.asc())
         .limit(1)
@@ -179,7 +183,7 @@ async def _claim_job(session: AsyncSession) -> IngestionJob | None:
         return None
     job.status = "PROCESSING"
     job.attempts += 1
-    job.updated_at = datetime.now(timezone.utc)
+    job.updated_at = datetime.now(UTC)
     await session.flush()
     return job
 
@@ -239,7 +243,10 @@ async def _process_job(session: AsyncSession, job: IngestionJob) -> None:
         document.status = DocumentStatus.QUARANTINED.value
         await session.flush()
         await record_event(
-            session, "document.quarantine", actor_id=None, object_ref=str(document.id),
+            session,
+            "document.quarantine",
+            actor_id=None,
+            object_ref=str(document.id),
             payload={"reason": reason},
         )
         return
@@ -248,10 +255,8 @@ async def _process_job(session: AsyncSession, job: IngestionJob) -> None:
     if mime == "application/pdf":
         pages = get_extractor(settings).extract(plaintext)
         extracted = "\n".join(text for _, text in pages)
-        page_of = [page for page, _ in pages for _ in [0]]
     else:
         extracted = plaintext.decode("utf-8", errors="replace")
-        pages = [(None, extracted)]
 
     # 4. chunk
     chunks = chunk_text(extracted)
@@ -263,7 +268,7 @@ async def _process_job(session: AsyncSession, job: IngestionJob) -> None:
 
     # 5. embed + 6. index
     embeddings = get_embedding_provider(settings).embed(chunks)
-    for i, (text, vector) in enumerate(zip(chunks, embeddings)):
+    for i, (text, vector) in enumerate(zip(chunks, embeddings, strict=True)):
         session.add(
             Chunk(
                 version_id=version.id,
@@ -281,6 +286,9 @@ async def _process_job(session: AsyncSession, job: IngestionJob) -> None:
     job.error = None
     await session.flush()
     await record_event(
-        session, "document.ingest.ready", actor_id=None, object_ref=str(document.id),
+        session,
+        "document.ingest.ready",
+        actor_id=None,
+        object_ref=str(document.id),
         payload={"chunks": len(chunks)},
     )

@@ -32,7 +32,11 @@ class Settings(BaseSettings):
 
     # Ingestion limits
     max_upload_bytes: int = 25 * 1024 * 1024
-    allowed_mime_prefixes: tuple[str, ...] = ("application/pdf", "text/", "application/vnd.openxmlformats")
+    allowed_mime_prefixes: tuple[str, ...] = (
+        "application/pdf",
+        "text/",
+        "application/vnd.openxmlformats",
+    )
     chunk_size: int = 1000
     chunk_overlap: int = 120
 

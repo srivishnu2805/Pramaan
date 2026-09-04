@@ -17,7 +17,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/token", response_model=TokenResponse)
-async def login(form: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
+async def login(
+    form: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)
+):
     user = await authenticate_user(session, form.username, form.password)
     if user is None:
         await record_event(session, "auth.failure", actor_id=None, object_ref=form.username)
@@ -37,8 +39,13 @@ async def login(form: OAuth2PasswordRequestForm = Depends(), session: AsyncSessi
 @router.get("/me", response_model=UserOut)
 async def me(user: User = Depends(get_current_user)):
     return UserOut(
-        id=user.id, username=user.username, full_name=user.full_name, role=user.role,
-        department=user.department, clearance=user.clearance, disabled=user.disabled,
+        id=user.id,
+        username=user.username,
+        full_name=user.full_name,
+        role=user.role,
+        department=user.department,
+        clearance=user.clearance,
+        disabled=user.disabled,
     )
 
 
@@ -67,6 +74,11 @@ async def create_user(
     await session.commit()
     await session.refresh(user)
     return UserOut(
-        id=user.id, username=user.username, full_name=user.full_name, role=user.role,
-        department=user.department, clearance=user.clearance, disabled=user.disabled,
+        id=user.id,
+        username=user.username,
+        full_name=user.full_name,
+        role=user.role,
+        department=user.department,
+        clearance=user.clearance,
+        disabled=user.disabled,
     )

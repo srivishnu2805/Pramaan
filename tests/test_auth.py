@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from uuid import UUID, uuid4
+from datetime import timedelta
+from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 from fastapi import HTTPException
-from sqlalchemy import select
 
 from pramaan.auth.core import create_access_token, decode_token, hash_password, verify_password
 from pramaan.auth.deps import get_current_user

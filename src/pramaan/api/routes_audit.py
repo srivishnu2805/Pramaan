@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pramaan.audit import verify_chain
@@ -43,9 +43,14 @@ async def list_events(
     stmt = stmt.limit(limit).offset(offset)
     rows = (await session.execute(stmt)).scalars().all()
     return [
-        AuditOut(id=r.id, event_type=r.event_type, actor_id=r.actor_id,
-                 object_ref=r.object_ref, occurred_at=r.occurred_at.isoformat(),
-                 event_hash=r.event_hash)
+        AuditOut(
+            id=r.id,
+            event_type=r.event_type,
+            actor_id=r.actor_id,
+            object_ref=r.object_ref,
+            occurred_at=r.occurred_at.isoformat(),
+            event_hash=r.event_hash,
+        )
         for r in rows
     ]
 

@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -18,10 +18,10 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pramaan.audit import record_event
-from pramaan.models import Case, Document, DocumentStatus, DocumentVersion, User
+from pramaan.models import Document, DocumentStatus, DocumentVersion, User
 from pramaan.permissions import RetrievalScope, require_case_access
 from pramaan.providers import get_kms, get_signer
-from pramaan.security.envelope import envelope_decrypt, envelope_encrypt, EncryptedPayload
+from pramaan.security.envelope import EncryptedPayload, envelope_decrypt, envelope_encrypt
 from pramaan.security.hashing import canonical_manifest, sha256_bytes
 
 
@@ -65,7 +65,7 @@ async def _build_version(
         )
         previous_id = result.scalars().first()
 
-    created_at = datetime.now(timezone.utc)
+    created_at = datetime.now(UTC)
     manifest = canonical_manifest(
         document.id,
         version_number,
@@ -104,7 +104,9 @@ async def create_document(
 ) -> Document:
     case = await require_case_access(session, user, case_id)
     if document_classification_denied(user, classification):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Classification exceeds clearance")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Classification exceeds clearance"
+        )
     document = Document(
         case_id=case.id, title=title, classification=classification, created_by=user.id
     )
@@ -114,7 +116,10 @@ async def create_document(
     session.add(version)
     await session.flush()
     await record_event(
-        session, "document.create", actor_id=user.id, object_ref=str(document.id),
+        session,
+        "document.create",
+        actor_id=user.id,
+        object_ref=str(document.id),
         payload={"case_id": str(case.id), "version": 1},
     )
     return document
@@ -129,13 +134,18 @@ async def add_version(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
     await require_case_access(session, user, document.case_id)
     if document.status != DocumentStatus.ACTIVE.value:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Document is {document.status}")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=f"Document is {document.status}"
+        )
     next_number, _ = await _next_version(session, document.id)
     version = await _build_version(session, document, user, plaintext, next_number)
     session.add(version)
     await session.flush()
     await record_event(
-        session, "document.version.create", actor_id=user.id, object_ref=str(document.id),
+        session,
+        "document.version.create",
+        actor_id=user.id,
+        object_ref=str(document.id),
         payload={"version": next_number},
     )
     return version
@@ -147,7 +157,9 @@ async def set_status(
     try:
         target = DocumentStatus(new_status)
     except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid status"
+        ) from None
     result = await session.execute(select(Document).where(Document.id == document_id))
     document = result.scalars().first()
     if document is None:
@@ -157,7 +169,10 @@ async def set_status(
     document.status = target.value
     await session.flush()
     await record_event(
-        session, "document.status.change", actor_id=user.id, object_ref=str(document.id),
+        session,
+        "document.status.change",
+        actor_id=user.id,
+        object_ref=str(document.id),
         payload={"from": old, "to": target.value},
     )
     return document
@@ -191,15 +206,16 @@ async def decrypt_version(
         ),
     )
     await record_event(
-        session, "document.view", actor_id=user.id, object_ref=str(document.id),
+        session,
+        "document.view",
+        actor_id=user.id,
+        object_ref=str(document.id),
         payload={"version": version_number},
     )
     return plaintext
 
 
-async def verify_integrity(
-    session: AsyncSession, document_id: UUID, version_number: int
-) -> dict:
+async def verify_integrity(session: AsyncSession, document_id: UUID, version_number: int) -> dict:
     """Recompute hashes and verify the manifest signature. Never raises on mismatch."""
     res = await session.execute(
         select(DocumentVersion).where(

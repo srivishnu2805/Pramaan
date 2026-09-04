@@ -6,11 +6,8 @@ from pramaan.config import Settings
 from pramaan.services.ai import (
     DevEmbeddingProvider,
     DevLLMProvider,
-    DocumentExtractor,
     EmbeddingProvider,
     LLMProvider,
-    OCRProvider,
-    Reranker,
     get_embedding_provider,
     get_llm_provider,
 )
@@ -39,12 +36,16 @@ def test_dev_embedding_deterministic_and_sized():
 def test_dev_embedding_similar_texts_closer():
     provider = DevEmbeddingProvider(dim=384)
     anchor, close, far = provider.embed(
-        ["burglary suspect entered through window", "suspect entered through window at night", "quantum field theory"]
+        [
+            "burglary suspect entered through window",
+            "suspect entered through window at night",
+            "quantum field theory",
+        ]
     )
     import math
 
     def dist(x, y):
-        return math.sqrt(sum((p - q) ** 2 for p, q in zip(x, y)))
+        return math.sqrt(sum((p - q) ** 2 for p, q in zip(x, y, strict=True)))
 
     assert dist(anchor, close) < dist(anchor, far)
 

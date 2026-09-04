@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 import sys
-import time
 
 from pramaan.db import AsyncSessionLocal
 from pramaan.services.ingestion import process_next_job

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import pytest
-from sqlalchemy import select, update
+from sqlalchemy import update
 
 from pramaan.audit import record_event, verify_chain
 from pramaan.models import AuditEvent

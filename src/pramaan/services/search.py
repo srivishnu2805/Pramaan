@@ -94,10 +94,13 @@ async def secure_search(
     ]
     if ranked:
         context = "\n".join(
-            f"<UNTRUSTED-DOCUMENT id={r.document_id} chunk={r.chunk_index}>\n{r.content}\n</UNTRUSTED-DOCUMENT>"
+            f"<UNTRUSTED-DOCUMENT id={r.document_id} chunk={r.chunk_index}>\n"
+            f"{r.content}\n</UNTRUSTED-DOCUMENT>"
             for r in ranked
         )
-        user_prompt = f"CONTEXT:\n{context}\n\nQUESTION: {query}\nAnswer only from the context above."
+        user_prompt = (
+            f"CONTEXT:\n{context}\n\nQUESTION: {query}\nAnswer only from the context above."
+        )
     else:
         user_prompt = f"CONTEXT:\n(none)\n\nQUESTION: {query}\nAnswer only from the context above."
     answer = get_llm_provider(settings).complete(_SYSTEM, user_prompt)

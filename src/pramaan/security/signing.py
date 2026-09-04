@@ -36,9 +36,7 @@ class DevSignatureProvider:
 
     @classmethod
     def generate(cls, key_size: int = 2048) -> DevSignatureProvider:
-        return cls(
-            rsa.generate_private_key(public_exponent=65537, key_size=key_size)
-        )
+        return cls(rsa.generate_private_key(public_exponent=65537, key_size=key_size))
 
     @classmethod
     def from_pem(cls, pem: bytes, password: bytes | None = None) -> DevSignatureProvider:

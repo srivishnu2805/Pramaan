@@ -16,9 +16,13 @@ router = APIRouter(prefix="/cases", tags=["cases"])
 
 def _out(case) -> CaseOut:
     return CaseOut(
-        id=case.id, title=case.title, classification=case.classification,
-        description=case.description, owner_id=case.owner_id,
-        status=case.status, created_at=case.created_at,
+        id=case.id,
+        title=case.title,
+        classification=case.classification,
+        description=case.description,
+        owner_id=case.owner_id,
+        status=case.status,
+        created_at=case.created_at,
     )
 
 
@@ -28,7 +32,9 @@ async def create_case(
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    case = await service.create_case(session, user, body.title, body.classification, body.description)
+    case = await service.create_case(
+        session, user, body.title, body.classification, body.description
+    )
     await session.commit()
     return _out(case)
 

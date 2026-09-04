@@ -4,9 +4,9 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy import select, update
 
-from pramaan.audit import record_event, verify_chain
+from pramaan.audit import verify_chain
 from pramaan.auth.core import hash_password
-from pramaan.models import Case, Document, DocumentVersion, User
+from pramaan.models import Case, DocumentVersion, User
 from pramaan.permissions import RetrievalScope
 from pramaan.services.documents import (
     add_version,
@@ -37,7 +37,9 @@ async def test_create_document_produces_signed_v1(session):
     alice = await _user(session, "alice-doc")
     case = await _case(session, alice)
     doc = await create_document(session, alice, case.id, "FIR-001", "CONFIDENTIAL", b"body bytes")
-    res = await session.execute(select(DocumentVersion).where(DocumentVersion.document_id == doc.id))
+    res = await session.execute(
+        select(DocumentVersion).where(DocumentVersion.document_id == doc.id)
+    )
     versions = res.scalars().all()
     assert len(versions) == 1
     assert versions[0].version_number == 1

@@ -10,9 +10,7 @@ from pramaan.security.signing import DevSignatureProvider, SignatureProvider
 
 
 def test_sha256_known_vector():
-    assert sha256_bytes(b"") == (
-        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    )
+    assert sha256_bytes(b"") == ("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
 
 
 def test_manifest_is_canonical():
@@ -50,7 +48,6 @@ def test_tampered_manifest_rejected(provider: DevSignatureProvider):
 def test_tampered_signature_rejected(provider: DevSignatureProvider):
     manifest = b'{"document": "abc"}'
     sig = provider.sign(manifest)
-    import os
     bad = bytearray(sig)
     bad[0] ^= 0x01
     assert not provider.verify(manifest, bytes(bad))
@@ -58,7 +55,11 @@ def test_tampered_signature_rejected(provider: DevSignatureProvider):
 
 def test_wrong_manifest_field_invalidates_signature(provider: DevSignatureProvider):
     doc = uuid.uuid4()
-    m1 = canonical_manifest(doc, 1, "c-hash", "m-hash", uuid.uuid4(), "2026-01-01T00:00:00Z", "SECRET")
-    m2 = canonical_manifest(doc, 2, "c-hash", "m-hash", uuid.uuid4(), "2026-01-01T00:00:00Z", "SECRET")
+    m1 = canonical_manifest(
+        doc, 1, "c-hash", "m-hash", uuid.uuid4(), "2026-01-01T00:00:00Z", "SECRET"
+    )
+    m2 = canonical_manifest(
+        doc, 2, "c-hash", "m-hash", uuid.uuid4(), "2026-01-01T00:00:00Z", "SECRET"
+    )
     sig = provider.sign(m1)
     assert not provider.verify(m2, sig)

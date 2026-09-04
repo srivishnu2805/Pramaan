@@ -70,3 +70,26 @@ def decode_token(token: str) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     return payload
+
+
+async def authenticate_user(session, username: str, password: str):
+    """Verify credentials against the DB. Returns the User or None.
+
+    Verifies against a dummy hash when the user is missing to avoid
+    user-enumeration via timing. Disabled accounts never authenticate.
+    """
+    from sqlalchemy import select
+
+    from pramaan.models import User
+
+    result = await session.execute(select(User).where(User.username == username))
+    user = result.scalars().first()
+    if user is None:
+        verify_password(password, DUMMY_HASH)
+        return None
+    if user.disabled:
+        verify_password(password, user.hashed_password)
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user

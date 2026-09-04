@@ -3,10 +3,11 @@ deno = "2.9.6"
 
 [tasks]
 dev = "uv run uvicorn src.pramaan.main:app --reload --port 8000"
+web = "deno task --cwd web dev"
 worker = "uv run python worker.py"
 test = "uv run pytest"
-lint = "uv run ruff check ."
-format = "uv run ruff format ."
+lint = "uv run ruff check . && deno lint --cwd web"
+format = "uv run ruff format . && deno fmt --cwd web"
 check = "uv run ruff check . && uv run pytest"
 db-upgrade = "uv run alembic upgrade head"
 db-revision = "uv run alembic revision --autogenerate -m"

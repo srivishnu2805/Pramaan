@@ -14,7 +14,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE}${path}`, { ...init, headers });
   if (res.status === 401) {
     localStorage.removeItem("pramaan_token");
-    if (location.pathname !== "/login") location.href = "/login";
+    if (location.pathname !== "/login" && location.pathname !== "/unauthorized") {
+      location.href = "/unauthorized";
+    }
     throw new Error("Unauthorized");
   }
   if (!res.ok) {
@@ -95,6 +97,8 @@ export interface Permission {
 
 export interface Citation {
   document_id: string;
+  document_title?: string;
+  case_id?: string;
   version_number: number;
   page: number | null;
   chunk_index: number;

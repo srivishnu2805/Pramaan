@@ -22,9 +22,11 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sqlalchemy.orm import selectinload
+
 from pramaan.audit import record_event
 from pramaan.config import settings
-from pramaan.models import Chunk, User
+from pramaan.models import Chunk, Document, DocumentVersion, User
 from pramaan.permissions import RetrievalScope
 from pramaan.services.ai import get_embedding_provider, get_llm_provider, get_reranker
 
@@ -40,6 +42,8 @@ _SYSTEM = (
 @dataclass
 class Citation:
     document_id: UUID
+    document_title: str
+    case_id: UUID
     version_number: int
     page: int | None
     chunk_index: int
@@ -71,6 +75,7 @@ async def secure_search(
     query_vector = get_embedding_provider(settings).embed([query])[0]
     stmt = (
         select(Chunk)
+        .options(selectinload(Chunk.document), selectinload(Chunk.version))
         .where(scope.chunk_filter())
         .order_by(Chunk.embedding.cosine_distance(query_vector))
         .limit(k)
@@ -85,7 +90,9 @@ async def secure_search(
     citations = [
         Citation(
             document_id=r.document_id,
-            version_number=(await _version_number(session, r)),
+            document_title=r.document.title if r.document else "Document",
+            case_id=r.case_id,
+            version_number=r.version.version_number if r.version else (await _version_number(session, r)),
             page=r.page,
             chunk_index=r.chunk_index,
             snippet=r.content[:300],

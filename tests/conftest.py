@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import AsyncGenerator
+
 import pytest_asyncio
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -8,7 +10,7 @@ from pramaan.config import settings
 
 
 @pytest_asyncio.fixture
-async def session() -> AsyncSession:
+async def session() -> AsyncGenerator[AsyncSession, None]:
     """Each test gets a fresh engine + connection + transaction, all on one loop.
 
     The transaction is rolled back at teardown so tests never pollute the DB.

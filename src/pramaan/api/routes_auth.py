@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +14,16 @@ from pramaan.models import User
 from pramaan.permissions import CLEARANCE_ORDER
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+@router.post("/session-expired", status_code=204)
+async def session_expired(request: Request, session: AsyncSession = Depends(get_session)):
+    """Called by the frontend when a 401 is received. Logs session expiry to the audit trail.
+    Intentionally unauthenticated — the token is already invalid at this point.
+    """
+    ip = request.client.host if request.client else "unknown"
+    await record_event(session, "auth.session_expired", actor_id=None, object_ref=ip)
+    await session.commit()
 
 
 @router.post("/token", response_model=TokenResponse)
@@ -47,6 +57,27 @@ async def me(user: User = Depends(get_current_user)):
         clearance=user.clearance,
         disabled=user.disabled,
     )
+
+
+@router.get("/users", response_model=list[UserOut])
+async def list_users(
+    _: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """List all active users. Used by the frontend to populate the permissions dropdown."""
+    result = await session.execute(select(User).where(User.disabled.is_(False)).order_by(User.username))
+    return [
+        UserOut(
+            id=u.id,
+            username=u.username,
+            full_name=u.full_name,
+            role=u.role,
+            department=u.department,
+            clearance=u.clearance,
+            disabled=u.disabled,
+        )
+        for u in result.scalars().all()
+    ]
 
 
 @router.post("/users", response_model=UserOut, status_code=201)

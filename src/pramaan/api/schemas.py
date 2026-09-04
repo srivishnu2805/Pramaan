@@ -93,6 +93,8 @@ class RagRequest(BaseModel):
 
 class CitationOut(BaseModel):
     document_id: UUID
+    document_title: str
+    case_id: UUID
     version_number: int
     page: int | None
     chunk_index: int

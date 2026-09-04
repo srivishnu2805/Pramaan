@@ -25,6 +25,8 @@ async def rag_query(
         citations=[
             CitationOut(
                 document_id=c.document_id,
+                document_title=c.document_title,
+                case_id=c.case_id,
                 version_number=c.version_number,
                 page=c.page,
                 chunk_index=c.chunk_index,

@@ -4,12 +4,17 @@ import { useAuth } from "@/auth";
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label } from "@/components/ui";
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const nav = useNavigate();
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
+
+  // Redirect once /auth/me resolves with a real user — no race with the fetch
+  React.useEffect(() => {
+    if (user) nav("/", { replace: true });
+  }, [user, nav]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +22,7 @@ export function LoginPage() {
     setError(null);
     try {
       await login(username, password);
-      nav("/");
+      // nav happens via useEffect above once user is populated
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {

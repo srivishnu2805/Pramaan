@@ -1,5 +1,7 @@
 import * as React from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { BotOff } from "lucide-react";
 import { api, type RagResponse } from "@/api/client";
 import { Button, Card, CardContent, Textarea } from "@/components/ui";
 import { RagAnswer } from "@/pages/search";
@@ -11,12 +13,32 @@ interface Msg {
 }
 
 export function AssistantPage() {
+  const { data: config } = useQuery<{ allow_external_ai: boolean }>({
+    queryKey: ["app-config"],
+    queryFn: () => api.get<{ allow_external_ai: boolean }>("/config"),
+  });
+
   const [msgs, setMsgs] = React.useState<Msg[]>([]);
   const [draft, setDraft] = React.useState("");
   const ask = useMutation({
     mutationFn: (q: string) => api.post<RagResponse>("/search/rag", { query: q, top_k: 5 }),
     onSuccess: (rag, q) => setMsgs((m) => [...m, { role: "user", text: q }, { role: "assistant", rag }]),
   });
+
+  if (config && !config.allow_external_ai) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-slate-200 bg-white p-12 text-center shadow-xs">
+        <BotOff className="h-12 w-12 text-slate-400" />
+        <h2 className="text-xl font-bold text-slate-800">AI Assistant Disabled</h2>
+        <p className="max-w-md text-sm text-slate-600">
+          External AI integration is currently disabled (<code>PRAMAAN_ALLOW_EXTERNAL_AI=false</code>) to safeguard confidential records from third-party APIs.
+        </p>
+        <Link to="/search">
+          <Button variant="default">Use Secure Search</Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">

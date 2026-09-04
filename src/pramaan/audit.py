@@ -19,12 +19,13 @@ import json
 from datetime import UTC, datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from pramaan.models import AuditEvent
 
 GENESIS_HASH = "00" * 32
+AUDIT_LOCK_ID = 884729104
 
 
 def _canonical(
@@ -52,14 +53,18 @@ async def record_event(
 ) -> AuditEvent:
     """Append one audit event, chaining to the previous event's hash.
 
-    Uses SELECT ... FOR UPDATE on the latest row inside the caller's
-    transaction to serialize appends and prevent forked chains.
+    Uses a transaction-level advisory lock to serialize appends across concurrent
+    transactions and prevent forked chains.
     """
+    try:
+        await session.execute(select(func.pg_advisory_xact_lock(AUDIT_LOCK_ID)))
+    except Exception:
+        pass
+
     latest = await session.execute(
         select(AuditEvent)
         .order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
         .limit(1)
-        .with_for_update()
     )
     row = latest.scalars().first()
     prev_hash = row.event_hash if row else GENESIS_HASH

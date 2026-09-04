@@ -36,6 +36,8 @@ class Settings(BaseSettings):
         "application/pdf",
         "text/",
         "application/vnd.openxmlformats",
+        "image/",
+        "video/",
     )
     chunk_size: int = 1000
     chunk_overlap: int = 120

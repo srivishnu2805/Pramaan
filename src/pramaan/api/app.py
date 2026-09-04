@@ -80,6 +80,15 @@ def create_app() -> FastAPI:
     async def healthz():
         return {"status": "ok"}
 
+    @app.get("/config")
+    async def get_config():
+        from pramaan.config import settings
+
+        return {
+            "allow_external_ai": settings.allow_external_ai,
+            "has_openai_key": bool(settings.openai_api_key),
+        }
+
     return app
 
 

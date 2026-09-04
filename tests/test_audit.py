@@ -50,5 +50,11 @@ async def test_empty_chain_verifies(session):
 
 
 async def test_genesis_prev_hash_is_zero(session):
+    from sqlalchemy import delete
+
+    from pramaan.models import AuditEvent
+
+    await session.execute(delete(AuditEvent))
+    await session.flush()
     first = await record_event(session, "login", actor_id=None)
     assert first.prev_hash == "00" * 32

@@ -10,8 +10,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: true,
     proxy: {
-      "/api": { target: "http://127.0.0.1:8000", changeOrigin: true },
+      "^/(auth|cases|documents|audit|search|healthz|docs|config)": {
+        target: process.env.VITE_API_URL ?? "http://backend:8000",
+        changeOrigin: true,
+      },
     },
   },
 });

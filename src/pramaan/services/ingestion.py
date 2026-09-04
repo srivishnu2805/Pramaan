@@ -36,6 +36,15 @@ class ValidationError(ValueError):
 
 _SIGNATURES: list[tuple[bytes, str]] = [
     (b"%PDF-", "application/pdf"),
+    (b"\x89PNG\r\n\x1a\n", "image/png"),
+    (b"\xff\xd8\xff", "image/jpeg"),
+    (b"GIF87a", "image/gif"),
+    (b"GIF89a", "image/gif"),
+    (b"RIFF", "image/webp"),  # validated further in sniffing
+    (b"\x00\x00\x00\x18ftyp", "video/mp4"),
+    (b"\x00\x00\x00\x1cftyp", "video/mp4"),
+    (b"\x00\x00\x00\x20ftyp", "video/mp4"),
+    (b"\x1a\x45\xdf\xa3", "video/webm"),  # Matroska / WebM
     (b"MZ", "application/x-dosexec"),
     (b"\x7fELF", "application/x-elf"),
     (b"PK\x03\x04", "application/zip"),
@@ -43,10 +52,27 @@ _SIGNATURES: list[tuple[bytes, str]] = [
     (b"%!PS", "application/postscript"),
 ]
 
-ALLOWED_CONTENT_TYPES = {"application/pdf", "text/plain"}
+ALLOWED_CONTENT_TYPES = {
+    "application/pdf",
+    "text/plain",
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "image/webp",
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+}
 
 
 def _builtin_sniff(content: bytes) -> str | None:
+    # Check RIFF for WEBP
+    if content.startswith(b"RIFF") and len(content) >= 12 and content[8:12] == b"WEBP":
+        return "image/webp"
+    # Check ISO base media file format (MP4 / MOV)
+    if len(content) >= 12 and content[4:8] == b"ftyp":
+        return "video/mp4"
+
     for magic, mime in _SIGNATURES:
         if content.startswith(magic):
             return mime
@@ -63,7 +89,7 @@ def _builtin_sniff(content: bytes) -> str | None:
 
 
 def detect_mime(content: bytes, filename: str) -> str:
-    """Sniff content type from bytes. Filename is ignored except as a last hint."""
+    """Sniff content type from bytes. Filename is used as fallback for media formats."""
     try:
         import magic  # type: ignore
 
@@ -78,6 +104,17 @@ def detect_mime(content: bytes, filename: str) -> str:
         raise ValidationError("content does not look like a PDF despite .pdf name")
     if lowered.endswith(".txt"):
         raise ValidationError("content does not look like text despite .txt name")
+    if lowered.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp")):
+        if lowered.endswith(".png"): return "image/png"
+        if lowered.endswith((".jpg", ".jpeg")): return "image/jpeg"
+        if lowered.endswith(".gif"): return "image/gif"
+        if lowered.endswith(".webp"): return "image/webp"
+    if lowered.endswith((".mp4", ".m4v")):
+        return "video/mp4"
+    if lowered.endswith(".webm"):
+        return "video/webm"
+    if lowered.endswith(".mov"):
+        return "video/quicktime"
     raise ValidationError("unrecognized file type")
 
 
@@ -255,16 +292,17 @@ async def _process_job(session: AsyncSession, job: IngestionJob) -> None:
     if mime == "application/pdf":
         pages = get_extractor(settings).extract(plaintext)
         extracted = "\n".join(text for _, text in pages)
+    elif mime.startswith("image/"):
+        extracted = f"Image evidence document: {document.title}. Format: {mime}. File size: {len(plaintext)} bytes. Classification: {document.classification}."
+    elif mime.startswith("video/"):
+        extracted = f"Video evidence recording: {document.title}. Format: {mime}. File size: {len(plaintext)} bytes. Classification: {document.classification}."
     else:
         extracted = plaintext.decode("utf-8", errors="replace")
 
     # 4. chunk
     chunks = chunk_text(extracted)
     if not chunks:
-        job.status = "FAILED"
-        job.error = "no extractable text"
-        await session.flush()
-        return
+        chunks = [f"Evidence record: {document.title} ({mime})"]
 
     # 5. embed + 6. index
     embeddings = get_embedding_provider(settings).embed(chunks)

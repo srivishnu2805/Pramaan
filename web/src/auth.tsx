@@ -5,6 +5,7 @@ import { api, type User } from "@/api/client";
 interface AuthCtx {
   user: User | null;
   loading: boolean;
+  ready: boolean; // true once the /auth/me query has settled (success or error)
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -13,8 +14,11 @@ const Ctx = React.createContext<AuthCtx | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const qc = useQueryClient();
-  const token = typeof localStorage !== "undefined" ? localStorage.getItem("pramaan_token") : null;
-  const { data: user, isLoading } = useQuery({
+  const [token, setToken] = React.useState<string | null>(() =>
+    typeof localStorage !== "undefined" ? localStorage.getItem("pramaan_token") : null
+  );
+
+  const { data: user, isLoading, isError } = useQuery({
     queryKey: ["me"],
     queryFn: () => api.get<User>("/auth/me"),
     enabled: !!token,
@@ -31,16 +35,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!res.ok) throw new Error("Invalid username or password");
     const body = await res.json();
     localStorage.setItem("pramaan_token", body.access_token);
-    await qc.invalidateQueries({ queryKey: ["me"] });
+    // Update state → enabled flips true → React Query fires /auth/me immediately
+    setToken(body.access_token);
   };
 
   const logout = () => {
     localStorage.removeItem("pramaan_token");
-    qc.setQueryData(["me"], null);
+    setToken(null);
+    qc.removeQueries({ queryKey: ["me"] });
   };
 
+  // ready = no pending fetch: either no token, or the query settled (success or error)
+  const ready = !token || (!isLoading && (!!user || isError));
+
   return (
-    <Ctx.Provider value={{ user: user ?? null, loading: isLoading, login, logout }}>
+    <Ctx.Provider value={{ user: user ?? null, loading: isLoading, ready, login, logout }}>
       {children}
     </Ctx.Provider>
   );

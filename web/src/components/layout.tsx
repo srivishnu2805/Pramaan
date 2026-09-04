@@ -1,19 +1,33 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "@/auth";
+import { api } from "@/api/client";
 import { Button, Badge, classificationVariant } from "@/components/ui";
 
-const links = [
-  { to: "/", label: "Dashboard" },
-  { to: "/cases", label: "Cases" },
-  { to: "/search", label: "Secure Search" },
-  { to: "/assistant", label: "AI Assistant" },
-  { to: "/audit", label: "Audit" },
-];
+interface AppConfig {
+  allow_external_ai: boolean;
+  has_openai_key: boolean;
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const nav = useNavigate();
+  const { data: config } = useQuery<AppConfig>({
+    queryKey: ["app-config"],
+    queryFn: () => api.get<AppConfig>("/config"),
+    staleTime: 60_000,
+  });
+
+  const aiEnabled = Boolean(config?.allow_external_ai);
+
+  const links = [
+    { to: "/", label: "Dashboard" },
+    { to: "/cases", label: "Cases" },
+    { to: "/search", label: "Secure Search" },
+    ...(aiEnabled ? [{ to: "/assistant", label: "AI Assistant" }] : []),
+    { to: "/audit", label: "Audit" },
+  ];
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">

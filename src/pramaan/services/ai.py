@@ -132,7 +132,8 @@ class PyMuPDFExtractor:
         pages: list[tuple[int | None, str]] = []
         try:
             for i, page in enumerate(doc, start=1):
-                pages.append((i, page.get_text()))
+                text_value: str = str(page.get_text())
+                pages.append((i, text_value))
         finally:
             doc.close()
         return pages

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { ShieldAlert } from "lucide-react";
+import { ArrowRight, ShieldAlert } from "lucide-react";
 
 const COUNTDOWN = 5;
 
@@ -29,22 +29,23 @@ export function UnauthorizedPage() {
   }, [secs, nav]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-slate-50 text-slate-900">
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-red-200 bg-white px-12 py-10 shadow-sm">
-        <ShieldAlert className="h-12 w-12 text-red-500" />
-        <h1 className="text-2xl font-bold">Session Expired</h1>
-        <p className="max-w-xs text-center text-sm text-slate-500">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#f4f1e9] px-5 text-[#172321]">
+      <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-3xl border border-[#e5cfc4] bg-[#fffdf8] px-8 py-10 text-center shadow-[0_16px_40px_rgba(43,53,48,.08)]">
+        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fff0eb] text-[#b34f3d]"><ShieldAlert className="h-7 w-7" /></span>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#b34f3d]">Access event recorded</p><h1 className="font-display text-3xl font-bold text-[#173b3a]">Session expired</h1>
+        <p className="max-w-xs text-center text-sm leading-relaxed text-[#71807a]">
           Your session is no longer valid. This access attempt has been recorded in the audit trail.
         </p>
         <div className="mt-2 flex items-center gap-2">
-          <span className="text-4xl font-mono font-bold text-red-500">{secs}</span>
-          <span className="text-sm text-slate-500">seconds until redirect…</span>
+          <span className="text-4xl font-mono font-bold text-[#b34f3d]">{secs}</span>
+          <span className="text-sm text-[#71807a]">seconds until redirect</span>
         </div>
         <button
+          type="button"
           onClick={() => nav("/login", { replace: true })}
-          className="mt-2 rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700"
+          className="mt-2 inline-flex items-center gap-2 rounded-lg bg-[#173b3a] px-4 py-2 text-sm font-semibold text-white hover:bg-[#245654]"
         >
-          Go to Login now
+          Return to sign in <ArrowRight className="h-4 w-4" />
         </button>
       </div>
     </div>

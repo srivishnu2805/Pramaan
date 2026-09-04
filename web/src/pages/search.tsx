@@ -2,17 +2,18 @@ import * as React from "react";
 import { useMutation } from "@tanstack/react-query";
 import { api, type RagResponse } from "@/api/client";
 import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Textarea } from "@/components/ui";
+import { ArrowUpRight, LockKeyhole, Search, Sparkles } from "lucide-react";
 
 export function SearchPage() {
   const [query, setQuery] = React.useState("");
   const ask = useMutation({ mutationFn: (q: string) => api.post<RagResponse>("/search/rag", { query: q, top_k: 5 }) });
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">Secure Semantic Search</h1>
-      <p className="text-sm text-slate-600">
-        Retrieval is authorization-constrained <em>before</em> vector search: only cases you can access are ever queried.
-      </p>
+    <div className="flex flex-col gap-8">
+      <div><p className="mb-3 font-mono text-[10px] uppercase tracking-[0.22em] text-[#c06f43]">Evidence desk / Retrieval</p><h1 className="font-display text-4xl font-bold text-[#173b3a]">Secure search</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#71807a]">Ask a question in plain language. Pramaan searches only the records your clearance permits and returns the evidence trail alongside its answer.</p></div>
+      <Card className="overflow-hidden border-[#c9d6cf]">
+        <CardHeader className="flex-row items-start gap-4 bg-[#173b3a] text-[#f8f6f0]"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#d9a57c] text-[#173b3a]"><Search className="h-5 w-5" /></div><div><CardTitle className="font-display text-2xl text-[#f8f6f0]">Ask the evidence</CardTitle><p className="mt-1 text-sm text-[#b9ceca]">Natural language retrieval across your authorized case files.</p></div></CardHeader>
+        <CardContent className="bg-[#edf3eb] pt-5">
       <form
         className="flex flex-col gap-3"
         onSubmit={(e) => {
@@ -20,11 +21,11 @@ export function SearchPage() {
           ask.mutate(query);
         }}
       >
-        <Textarea value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Ask about your authorized cases…" rows={3} />
-        <Button type="submit" disabled={ask.isPending} className="w-fit">
-          {ask.isPending ? "Searching…" : "Search"}
-        </Button>
+        <Textarea value={query} onChange={(e) => setQuery(e.target.value)} placeholder="What do you need to verify? e.g. Which documents mention the Northstar timeline?" rows={3} className="border-[#b7c9c0] bg-[#fffdf8]" />
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><p className="flex items-center gap-2 text-[11px] text-[#64816c]"><LockKeyhole className="h-3.5 w-3.5" /> Authorization scope enforced before retrieval</p><Button type="submit" disabled={ask.isPending} className="w-fit"><Search className="h-4 w-4" />{ask.isPending ? "Searching…" : "Search evidence"}</Button></div>
       </form>
+        </CardContent>
+      </Card>
       {ask.isError && <p className="text-sm text-red-600">{(ask.error as Error).message}</p>}
       {ask.data && <RagAnswer data={ask.data} />}
     </div>
@@ -103,16 +104,16 @@ export function RagAnswer({ data }: { data: RagResponse }) {
   return (
     <>
       <Card>
-        <CardHeader><CardTitle>Answer</CardTitle></CardHeader>
+        <CardHeader className="border-b border-[#e6e3da] pb-5"><div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f5e1d5] text-[#a55439]"><Sparkles className="h-4 w-4" /></span><div><p className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-[#9a9b8f]">Grounded response</p><CardTitle className="font-display text-2xl">Answer</CardTitle></div></div></CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p className="whitespace-pre-wrap text-sm leading-relaxed">{data.answer}</p>
           <div className="flex flex-col gap-3">
-            <h4 className="text-sm font-semibold">Citations ({data.citations.length})</h4>
+            <h4 className="flex items-center gap-2 text-sm font-semibold text-[#25413f]">Evidence trail <Badge variant="secondary">{data.citations.length} sources</Badge></h4>
             {data.citations.map((c, i) => (
-              <div key={i} className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs">
+              <div key={i} className="rounded-xl border border-[#d9d8ce] bg-[#faf8f2] p-4 text-xs">
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-slate-800">{c.document_title || "Document"}</span>
+                    <span className="font-semibold text-[#25413f]">{c.document_title || "Document"}</span>
                     <Badge variant="secondary">v{c.version_number}</Badge>
                     {c.page != null && <Badge variant="secondary">p.{c.page}</Badge>}
                     <Badge variant="secondary">chunk {c.chunk_index}</Badge>
@@ -124,7 +125,7 @@ export function RagAnswer({ data }: { data: RagResponse }) {
                       className="h-7 px-2.5 text-xs"
                       onClick={() => openDoc(c.document_id, c.document_title || "Document", c.version_number)}
                     >
-                      View
+                      <ArrowUpRight className="h-3.5 w-3.5" /> View source
                     </Button>
                     {c.case_id && (
                       <Link to={`/cases/${c.case_id}`}>
@@ -135,7 +136,7 @@ export function RagAnswer({ data }: { data: RagResponse }) {
                     )}
                   </div>
                 </div>
-                <p className="text-slate-700 leading-normal">{c.snippet}</p>
+                <p className="border-l-2 border-[#d9a57c] pl-3 leading-relaxed text-[#49615e]">{c.snippet}</p>
               </div>
             ))}
             {data.citations.length === 0 && (

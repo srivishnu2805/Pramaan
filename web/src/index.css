@@ -19,6 +19,7 @@ body {
   min-height: 100vh;
   margin: 0;
   background: radial-gradient(circle at 85% 0%, rgba(192, 111, 67, 0.12), transparent 25rem), linear-gradient(135deg, #f8f6f0 0%, #f0eee6 100%);
+  user-select: none;
 }
 
 .integrity-scene {

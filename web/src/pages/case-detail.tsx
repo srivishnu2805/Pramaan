@@ -322,16 +322,6 @@ function VersionRow({ doc, v }: { doc: Document; v: DocVersion }) {
     }
   };
 
-  const download = async () => {
-    const blob = await api.download(`/documents/${doc.id}/versions/${v.version_number}`);
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = doc.title || `version-${v.version_number}`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
     <>
       <div className="flex flex-wrap items-center gap-2 rounded bg-slate-50 px-3 py-2 text-sm">

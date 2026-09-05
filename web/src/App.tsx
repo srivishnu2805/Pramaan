@@ -10,6 +10,7 @@ import { CaseDetailPage } from "@/pages/case-detail";
 import { SearchPage } from "@/pages/search";
 import { AssistantPage } from "@/pages/assistant";
 import { AuditPage } from "@/pages/audit";
+import { UsersPage } from "@/pages/users";
 
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 10_000 } } });
 
@@ -34,6 +35,7 @@ export function App() {
             <Route path="/search" element={<Guard><SearchPage /></Guard>} />
             <Route path="/assistant" element={<Guard><AssistantPage /></Guard>} />
             <Route path="/audit" element={<Guard><AuditPage /></Guard>} />
+            <Route path="/users" element={<Guard><UsersPage /></Guard>} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

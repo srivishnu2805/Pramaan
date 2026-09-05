@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
 }
+
+:root {
+  color: #172321;
+  background: #f4f1e9;
+  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: radial-gradient(circle at 85% 0%, rgba(192, 111, 67, 0.12), transparent 25rem), linear-gradient(135deg, #f8f6f0 0%, #f0eee6 100%);
+}
+
+button, input, textarea, select { font: inherit; }
+::selection { background: #d9a57c; color: #172321; }

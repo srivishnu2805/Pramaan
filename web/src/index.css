@@ -21,5 +21,91 @@ body {
   background: radial-gradient(circle at 85% 0%, rgba(192, 111, 67, 0.12), transparent 25rem), linear-gradient(135deg, #f8f6f0 0%, #f0eee6 100%);
 }
 
+.integrity-scene {
+  position: relative;
+  width: 12rem;
+  height: 10rem;
+  perspective: 700px;
+  transform-style: preserve-3d;
+  transition: transform 300ms ease;
+}
+
+.integrity-scene:hover {
+  transform: rotateX(8deg) rotateY(-12deg) scale(1.04);
+}
+
+.integrity-orbit,
+.integrity-core,
+.integrity-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+}
+
+.integrity-orbit {
+  width: 8rem;
+  height: 4.5rem;
+  margin: -2.25rem 0 0 -4rem;
+  border: 1px solid rgba(217, 165, 124, 0.7);
+  border-radius: 50%;
+  animation: integrity-spin 8s linear infinite;
+}
+
+.integrity-orbit-one {
+  transform: rotateX(68deg) rotateZ(18deg);
+}
+
+.integrity-orbit-two {
+  transform: rotateY(68deg) rotateZ(-18deg);
+  animation-direction: reverse;
+  animation-duration: 6s;
+}
+
+.integrity-core {
+  display: flex;
+  width: 4rem;
+  height: 4rem;
+  align-items: center;
+  justify-content: center;
+  margin: -2rem 0 0 -2rem;
+  border: 1px solid rgba(217, 165, 124, 0.8);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, #2e6761, #173b3a);
+  color: #f8f6f0;
+  box-shadow: 0 0 35px rgba(217, 165, 124, 0.2);
+  animation: integrity-float 3s ease-in-out infinite;
+}
+
+.integrity-node {
+  width: 0.65rem;
+  height: 0.65rem;
+  margin: -0.325rem 0 0 -0.325rem;
+  border-radius: 50%;
+  background: #d9a57c;
+  box-shadow: 0 0 0 5px rgba(217, 165, 124, 0.12), 0 0 16px rgba(217, 165, 124, 0.65);
+}
+
+.integrity-node-1 { transform: translate3d(-4.2rem, -1.5rem, 1.5rem); }
+.integrity-node-2 { transform: translate3d(3.8rem, 0.2rem, 0.5rem); }
+.integrity-node-3 { transform: translate3d(-2.7rem, 2rem, -1rem); }
+
+@keyframes integrity-spin {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+@keyframes integrity-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.35rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .integrity-orbit,
+  .integrity-core {
+    animation: none;
+  }
+}
+
 button, input, textarea, select { font: inherit; }
 ::selection { background: #d9a57c; color: #172321; }

@@ -46,9 +46,24 @@ export function AuditPage() {
         )}
       </div>
       <div className="grid gap-4 sm:grid-cols-3"><Card className="p-5"><Activity className="h-5 w-5 text-[#c06f43]" /><p className="mt-4 text-xs uppercase tracking-[0.1em] text-[#71807a]">Events captured</p><p className="mt-1 font-display text-3xl font-bold text-[#173b3a]">{events?.length ?? 0}</p></Card><Card className="p-5"><ShieldCheck className="h-5 w-5 text-[#4e855f]" /><p className="mt-4 text-xs uppercase tracking-[0.1em] text-[#71807a]">Verification</p><p className="mt-1 font-display text-3xl font-bold text-[#173b3a]">{verification?.valid ? "PASS" : "—"}</p></Card><Card className="flex items-end justify-between p-5"><div><p className="text-xs uppercase tracking-[0.1em] text-[#71807a]">Ledger controls</p><p className="mt-1 text-sm font-semibold text-[#25413f]">Recheck the chain</p></div><Button size="sm" variant="outline" onClick={() => { refetch(); reverify(); }} disabled={isFetching || verifying} aria-label="Refresh audit trail"><RefreshCw className={`h-4 w-4 ${verifying ? "animate-spin" : ""}`} /></Button></Card></div>
-      <Card className="overflow-hidden"><CardHeader className="flex-row items-center justify-between border-b border-[#e6e3da] pb-5"><div><p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#9a9b8f]">Newest first</p><CardTitle className="font-display text-2xl">Event ledger</CardTitle></div><Badge variant="secondary">SHA-256 chain</Badge></CardHeader><CardContent className="overflow-x-auto p-0"><table className="w-full min-w-[760px] text-left text-sm">
+      <Card className="overflow-hidden bg-[#173b3a] text-[#f8f6f0]">
+        <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-sm">
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#d9a57c]">Live integrity map</p>
+            <h2 className="font-display text-2xl font-bold">Every event stays connected.</h2>
+            <p className="mt-2 text-sm leading-relaxed text-[#b9ceca]">A visual trace of the verified hash chain. Hover the map to inspect its motion.</p>
+          </div>
+          <div className="integrity-scene" aria-label="Animated 3D visualization of the audit hash chain" role="img">
+            <div className="integrity-orbit integrity-orbit-one" />
+            <div className="integrity-orbit integrity-orbit-two" />
+            <div className="integrity-core"><ShieldCheck className="h-7 w-7" /></div>
+            {[0, 1, 2].map((node) => <span key={node} className={`integrity-node integrity-node-${node + 1}`} />)}
+          </div>
+        </div>
+      </Card>
+      <Card className="overflow-hidden lg:-ml-2"><CardHeader className="flex-row items-center justify-between border-b border-[#e6e3da] pb-5"><div><p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#9a9b8f]">Newest first</p><CardTitle className="font-display text-2xl">Event ledger</CardTitle></div><Badge variant="secondary">SHA-256 chain</Badge></CardHeader><CardContent className="overflow-x-auto p-0"><table className="w-full min-w-[760px] text-left text-base">
             <thead>
-              <tr className="border-b border-[#e6e3da] text-[10px] uppercase tracking-[0.12em] text-[#9a9b8f]">
+              <tr className="border-b border-[#e6e3da] text-xs uppercase tracking-[0.12em] text-[#9a9b8f]">
                 <th className="py-2 pr-4">Time</th>
                 <th className="py-2 pr-4">Actor</th>
                 <th className="py-2 pr-4">Event</th>
@@ -61,9 +76,9 @@ export function AuditPage() {
                 <tr key={e.id} className="border-b border-[#eeeae1] last:border-0 hover:bg-[#faf8f2]">
                   <td className="whitespace-nowrap py-3 pr-4 text-[#60716d]">{fmt(e.occurred_at)}</td>
                   <td className="py-2 pr-4">{resolveActor(e.actor_id)}</td>
-                  <td className="py-3 pr-4 font-mono text-xs text-[#25413f]">{e.event_type}</td>
-                  <td className="py-3 pr-4 font-mono text-xs text-[#71807a]">{e.object_ref?.slice(0, 24) ?? "—"}</td>
-                  <td className="py-3 font-mono text-xs text-[#9a9b8f]">{e.event_hash.slice(0, 16)}…</td>
+                  <td className="py-3 pr-4 font-mono text-sm text-[#25413f]">{e.event_type}</td>
+                  <td className="py-3 pr-4 font-mono text-sm text-[#71807a]">{e.object_ref?.slice(0, 24) ?? "—"}</td>
+                  <td className="py-3 font-mono text-sm text-[#9a9b8f]">{e.event_hash.slice(0, 16)}…</td>
                 </tr>
               ))}
             </tbody>

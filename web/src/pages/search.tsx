@@ -44,11 +44,12 @@ export function RagAnswer({ data }: { data: RagResponse }) {
     isText: boolean;
     isPdf: boolean;
     isImage: boolean;
-  }>({ loading: false, isText: false, isPdf: false, isImage: false });
+    isVideo: boolean;
+  }>({ loading: false, isText: false, isPdf: false, isImage: false, isVideo: false });
 
   const openDoc = async (document_id: string, title: string, version_number: number) => {
     setActiveDoc({ id: document_id, title, version: version_number });
-    setViewerState({ loading: true, isText: false, isPdf: false, isImage: false });
+    setViewerState({ loading: true, isText: false, isPdf: false, isImage: false, isVideo: false });
 
     try {
       const blob = await api.download(`/documents/${document_id}/versions/${version_number}`);

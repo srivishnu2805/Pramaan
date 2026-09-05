@@ -18,7 +18,7 @@ export function UsersPage() {
   const [role, setRole] = React.useState("viewer");
   const [clearance, setClearance] = React.useState("UNCLASSIFIED");
 
-  const { data: users, isLoading, error } = useQuery({
+  const { data: users } = useQuery({
     queryKey: ["users"],
     queryFn: () => api.get<User[]>("/auth/users"),
     enabled: user?.role === "admin",

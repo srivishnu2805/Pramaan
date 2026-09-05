@@ -292,6 +292,7 @@ function VersionRow({ doc, v }: { doc: Document; v: DocVersion }) {
             isText: true,
             isPdf: false,
             isImage: false,
+            isVideo: false,
             mediaType: "text/plain",
           });
         } else {
@@ -303,6 +304,7 @@ function VersionRow({ doc, v }: { doc: Document; v: DocVersion }) {
             isText: false,
             isPdf: false,
             isImage: false,
+            isVideo: false,
             mediaType: "application/octet-stream",
           });
         }
@@ -317,6 +319,7 @@ function VersionRow({ doc, v }: { doc: Document; v: DocVersion }) {
         isText: false,
         isPdf: false,
         isImage: false,
+        isVideo: false,
         mediaType: "",
       });
     }

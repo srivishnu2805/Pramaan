@@ -27,8 +27,12 @@ async def drain_once() -> int:
 
 async def loop(poll_seconds: float = 2.0) -> None:
     while True:
-        count = await drain_once()
-        if count == 0:
+        try:
+            count = await drain_once()
+            if count == 0:
+                await asyncio.sleep(poll_seconds)
+        except Exception as exc:
+            print(f"worker loop error: {exc}", file=sys.stderr)
             await asyncio.sleep(poll_seconds)
 
 

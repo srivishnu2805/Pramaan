@@ -71,7 +71,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </aside>
         <main className="min-w-0 flex-1 px-5 py-8 lg:px-10 lg:py-10"><div className="mx-auto max-w-7xl">{children}</div></main>
       </div>
-      <div className="fixed bottom-5 right-5 z-10 hidden sm:block"><Button variant="ghost" size="sm" onClick={signOut}><LogOut className="h-4 w-4" /> Sign out</Button></div>
+      <div className="fixed bottom-5 right-5 z-10 hidden sm:block"><Button size="sm" onClick={signOut}><LogOut className="h-4 w-4" /> Sign out</Button></div>
     </div>
   );
 }
